@@ -12,7 +12,9 @@ const BulletPoint = ({
   onUnindent, 
   onToggle, 
   isExpanded,
-  isLast 
+  isLast,
+  setFocusId,
+  onExit
 }) => {
   const [text, setText] = useState(content);
   const inputRef = useRef(null);
@@ -23,6 +25,12 @@ const BulletPoint = ({
     }
   }, [isLast]);
 
+  useEffect(() => {
+    if (id === setFocusId) {
+      inputRef.current.focus();
+    }
+  }, [id, setFocusId]);
+
   const handleChange = (e) => {
     setText(e.target.value);
     onUpdate(id, e.target.value);
@@ -31,7 +39,11 @@ const BulletPoint = ({
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      onEnter(id, level);
+      if (text.trim() === '' && level > 0) {
+        onExit(id);
+      } else {
+        onEnter(id, level);
+      }
     } else if (e.key === 'Tab') {
       e.preventDefault();
       if (e.shiftKey) {
@@ -72,6 +84,8 @@ const BulletPoint = ({
               onIndent={onIndent}
               onUnindent={onUnindent}
               onToggle={onToggle}
+              setFocusId={setFocusId}
+              onExit={onExit}
             />
           ))}
         </div>
@@ -82,6 +96,7 @@ const BulletPoint = ({
 
 const BulletPointApp = () => {
   const [bullets, setBullets] = useState([{ id: 1, content: '', level: 0, children: [], isExpanded: true }]);
+  const [focusId, setFocusId] = useState(null);
 
   const updateBullet = (id, newContent) => {
     const updateBulletRecursive = (bullets) => {
@@ -103,11 +118,13 @@ const BulletPointApp = () => {
     const addBulletRecursive = (bullets) => {
       for (let i = 0; i < bullets.length; i++) {
         if (bullets[i].id === parentId) {
-          return [
+          const newBullets = [
             ...bullets.slice(0, i + 1),
             newBullet,
             ...bullets.slice(i + 1)
           ];
+          setFocusId(newBullet.id);
+          return newBullets;
         }
         if (bullets[i].children.length > 0) {
           const newChildren = addBulletRecursive(bullets[i].children);
@@ -155,9 +172,41 @@ const BulletPointApp = () => {
   };
 
   const unindentBullet = (id) => {
-    // Implementation for unindenting (moving a bullet point to a higher level)
-    // This is more complex and would require restructuring the bullet hierarchy
-    console.log("Unindent not implemented yet");
+    const unindentBulletRecursive = (bullets, parentLevel = -1) => {
+      for (let i = 0; i < bullets.length; i++) {
+        if (bullets[i].id === id) {
+          const unindentedBullet = { ...bullets[i], level: parentLevel + 1 };
+          const newBullets = [...bullets];
+          newBullets.splice(i, 1);
+          return { unindentedBullet, newBullets };
+        }
+        if (bullets[i].children.length > 0) {
+          const result = unindentBulletRecursive(bullets[i].children, bullets[i].level);
+          if (result) {
+            const { unindentedBullet, newBullets } = result;
+            return {
+              unindentedBullet,
+              newBullets: [
+                ...bullets.slice(0, i),
+                { ...bullets[i], children: newBullets },
+                ...bullets.slice(i + 1)
+              ]
+            };
+          }
+        }
+      }
+      return null;
+    };
+
+    const result = unindentBulletRecursive(bullets);
+    if (result) {
+      const { unindentedBullet, newBullets } = result;
+      setBullets([...newBullets, unindentedBullet]);
+    }
+  };
+
+  const exitParent = (id) => {
+    unindentBullet(id);
   };
 
   const toggleBullet = (id) => {
@@ -186,6 +235,8 @@ const BulletPointApp = () => {
         onUnindent={unindentBullet}
         onToggle={toggleBullet}
         isLast={isLast && index === bullets.length - 1}
+        setFocusId={focusId}
+        onExit={exitParent}
       />
     ));
   };
