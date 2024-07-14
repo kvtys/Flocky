@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronRight, ChevronDown, ZoomIn, ArrowLeft } from 'lucide-react';
+import { ChevronRight, ChevronDown, CircleDot, ArrowLeft } from 'lucide-react';
 
 // BulletPoint component represents a single bullet point in the app
 const BulletPoint = ({ 
@@ -77,17 +77,23 @@ const BulletPoint = ({
   };
 
   return (
-    <div>
-      <div className="flex items-center space-x-4 my-1">
+<div>
+      <div className="flex items-center space-x-2 my-1">
         {/* Indentation and toggle button */}
-        <div className="flex items-center" style={{ width: `${level * 1.5}rem` }}>
+        <div className="flex items-center">
           {children.length > 0 && (
-            <button onClick={() => onToggle(id)} className="text-gray-400 ml-auto">
+            <button
+              onClick={() => onToggle(id)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
               {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
           )}
+          {children.length > 0 ? 
+            <button onClick={() => onZoomIn(id)} className="text-gray-400"><CircleDot size={14}/></button> : 
+            <span className="text-gray-400 ml-5">•</span>
+          }
         </div>
-        <span className="text-gray-400">•</span>
         {/* Input field for bullet point content */}
         <input
           ref={inputRef}
@@ -95,13 +101,9 @@ const BulletPoint = ({
           value={text}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          className="flex-grow bg-transparent outline-none"
+          className="flex-grow bg-transparent outline-none  rounded px-1"
           placeholder="Type your note here..."
         />
-        {/* Zoom in button */}
-        <button onClick={() => onZoomIn(id)} className="text-gray-400">
-          <ZoomIn size={16} />
-        </button>
       </div>
       {/* Render child bullet points if expanded */}
       {isExpanded && children.length > 0 && (
