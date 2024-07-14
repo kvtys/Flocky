@@ -26,14 +26,17 @@ const BulletPoint = ({
   const [text, setText] = useState(content);
   // Reference to the input element for focus management
   const inputRef = useRef(null);
+  const [isNew, setIsNew] = useState(true);
 
   // Effect to focus on the last bullet point when it's created
   useEffect(() => {
     if (isLast) {
       inputRef.current.focus();
     }
+    // Set a timeout to remove the 'new' class after the animation
+    const timer = setTimeout(() => setIsNew(false), 50);
+    return () => clearTimeout(timer);
   }, [isLast]);
-
   // Effect to focus on a specific bullet point when setFocusId matches
   useEffect(() => {
     if (id === setFocusId) {
@@ -77,9 +80,8 @@ const BulletPoint = ({
   };
 
   return (
-<div>
+    <div className={`transition-all duration-100 ease-in-out ${isNew ? 'opacity-0 translate-y-[-10px]' : 'opacity-100 translate-y-0'}`}>
       <div className="flex items-center space-x-2 my-1">
-        {/* Indentation and toggle button */}
         <div className="flex items-center">
           {children.length > 0 && (
             <button
@@ -90,22 +92,20 @@ const BulletPoint = ({
             </button>
           )}
           {children.length > 0 ? 
-            <button onClick={() => onZoomIn(id)} className="text-gray-400"><CircleDot size={14}/></button> : 
+            <button onClick={() => onZoomIn(id)} className="text-gray-500 hover:text-gray-400"><CircleDot size={14}/></button> : 
             <span className="text-gray-400 ml-5">•</span>
           }
         </div>
-        {/* Input field for bullet point content */}
         <input
           ref={inputRef}
           type="text"
           value={text}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          className="flex-grow bg-transparent outline-none  rounded px-1"
+          className="flex-grow bg-transparent outline-none rounded px-1"
           placeholder="Type your note here..."
         />
       </div>
-      {/* Render child bullet points if expanded */}
       {isExpanded && children.length > 0 && (
         <div className="ml-4">
           {children.map(child => (
