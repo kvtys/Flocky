@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronRight, ChevronDown, ZoomIn, ArrowLeft } from 'lucide-react';
 
 // BulletPoint component represents a single bullet point in the app
 const BulletPoint = ({ 
@@ -19,7 +19,8 @@ const BulletPoint = ({
   isLast,
   setFocusId,
   onExit,
-  onDelete
+  onDelete,
+  onZoomIn
 }) => {
   // State to manage the text content of the bullet point
   const [text, setText] = useState(content);
@@ -97,6 +98,10 @@ const BulletPoint = ({
           className="flex-grow bg-transparent outline-none"
           placeholder="Type your note here..."
         />
+        {/* Zoom in button */}
+        <button onClick={() => onZoomIn(id)} className="text-gray-400">
+          <ZoomIn size={16} />
+        </button>
       </div>
       {/* Render child bullet points if expanded */}
       {isExpanded && children.length > 0 && (
@@ -115,6 +120,7 @@ const BulletPoint = ({
               setFocusId={setFocusId}
               onExit={onExit}
               onDelete={onDelete}
+              onZoomIn={onZoomIn}
             />
           ))}
         </div>
@@ -125,10 +131,9 @@ const BulletPoint = ({
 
 // Main component for the Bullet Point App
 const BulletPointApp = () => {
-  // State to manage all bullet points
   const [bullets, setBullets] = useState([{ id: 1, parentId: null, content: '', level: 0, children: [], isExpanded: true }]);
-  // State to manage which bullet point should be focused
   const [focusId, setFocusId] = useState(null);
+  const [zoomedBulletId, setZoomedBulletId] = useState(null);
 
   // Function to update the content of a bullet point
   const updateBullet = (id, newContent) => {
@@ -238,6 +243,9 @@ const BulletPointApp = () => {
       setBullets(prevBullets => {
         const insertAfterParent = (bullets, parentId, bulletToInsert) => {
           console.log("inserting after parent: ", parentId);
+          if(bulletToInsert.level === 0) {
+            bulletToInsert.parentId = null;
+          };
           for (let i = 0; i < bullets.length; i++) {
             if (bullets[i].id === parentId) {
               console.log("placing after: ", bullets[i].content + " at index: " + i);
@@ -386,9 +394,30 @@ const BulletPointApp = () => {
     setBullets(deleteBulletRecursive(bullets));
   };
 
-  // Function to render all bullet points recursively
+  const zoomIn = (id) => {
+    setZoomedBulletId(id);
+  };
+
+  const zoomOut = () => {
+    const currentBullet = findBulletById(bullets, zoomedBulletId);
+    setZoomedBulletId(currentBullet.parentId);
+  };
+
+  const findBulletById = (bullets, id) => {
+    for (const bullet of bullets) {
+      if (bullet.id === id) {
+        return bullet;
+      }
+      if (bullet.children.length > 0) {
+        const found = findBulletById(bullet.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
   const renderBullets = (bullets, isLast = false) => {
-    console.log("rendering bullets: ", JSON.stringify(bullets));
+    console.log('rendering bullets: ', JSON.stringify(bullets));
     return bullets.map((bullet, index) => (
       <BulletPoint
         key={bullet.id}
@@ -403,17 +432,38 @@ const BulletPointApp = () => {
         onArrowUp={arrowUp}
         onDelete={deleteBullet}
         isLast={isLast && index === bullets.length - 1}
-        setFocusId={focusId} 
+        setFocusId={focusId}
+        onZoomIn={() => zoomIn(bullet.id)}
       />
     ));
   };
 
-  // Render the main app component
+  const renderZoomedContent = () => {
+    if (!zoomedBulletId) {
+      return renderBullets(bullets, true);
+    }
+
+    const zoomedBullet = findBulletById(bullets, zoomedBulletId);
+    if (!zoomedBullet) return null;
+
+    return (
+      <div>
+        <div className="flex items-center mb-4">
+          <button onClick={zoomOut} className="mr-2">
+            <ArrowLeft size={20} />
+          </button>
+          <h2 className="text-xl font-bold">{zoomedBullet.content}</h2>
+        </div>
+        {renderBullets(zoomedBullet.children, true)}
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">Flocky</h1>
       <div className="space-y-2">
-        {renderBullets(bullets, true)}
+        {renderZoomedContent()}
       </div>
     </div>
   );
