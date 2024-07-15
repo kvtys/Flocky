@@ -1,7 +1,7 @@
 # Flocky
 Flocky aims to integrate "block-based" and "zooming in" functionalitu to offer an intuitive note-taking experience. Inspired heavily by https://workflowy.com and https://www.notion.so. 
 
-![Flocky Logo](https://via.placeholder.com/150x150.png?text=Flocky)
+![Flocky Logo](./image.png)
 
 Flocky is a sleek, intuitive bullet-point note-taking app built with React. It's designed to help you organize your thoughts, ideas, and tasks with ease and style.
 
