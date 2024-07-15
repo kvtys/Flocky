@@ -171,6 +171,16 @@ const BulletPointApp = () => {
   const [bullets, setBullets] = useState([{ id: 1, parentId: null, content: '', level: 0, children: [], isExpanded: true }]);
   const [focusId, setFocusId] = useState(null);
   const [zoomedBulletId, setZoomedBulletId] = useState(null);
+  const [zoomedBulletParentId, setZoomedBulletParentId] = useState(null);
+
+  useEffect(() => {
+    if (zoomedBulletId) {
+      const zoomedBullet = findBulletById(bullets, zoomedBulletId);
+      if (zoomedBullet) {
+        setZoomedBulletParentId(zoomedBullet.parentId);
+      }
+    }
+  }, [zoomedBulletId, bullets]);
 
   // Function to update the content of a bullet point
   const updateBullet = (id, newContent) => {
@@ -444,8 +454,12 @@ const BulletPointApp = () => {
   };
 
   const zoomOut = () => {
-    const currentBullet = findBulletById(bullets, zoomedBulletId);
-    setZoomedBulletId(currentBullet.parentId);
+    if (zoomedBulletParentId) {
+      setZoomedBulletId(zoomedBulletParentId);
+    }
+    else{
+      setZoomedBulletId(null);
+    }
   };
 
   const findBulletById = (bullets, id) => {
@@ -478,7 +492,7 @@ const BulletPointApp = () => {
         onDelete={deleteBullet}
         isLast={isLast && index === bullets.length - 1}
         setFocusId={focusId}
-        onZoomIn={() => zoomIn(bullet.id)}
+        onZoomIn={zoomIn}
       />
     ));
   };
